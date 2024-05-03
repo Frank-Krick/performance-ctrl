@@ -25,6 +25,7 @@ builder.ConfigureServices((context, services) =>
 {
     services.Configure<List<GpioMappingEntry>>(
         context.Configuration.GetRequiredSection("GpioMappings"));
+    
     services.AddLogging(loggingBuilder =>
     {
         loggingBuilder.AddConsole();
@@ -38,14 +39,17 @@ builder.ConfigureServices((context, services) =>
     services.AddSingleton<IGpioEventRoutingService>(serviceProvider =>
     {
         var options = serviceProvider.GetRequiredService<IOptions<List<GpioMappingEntry>>>();
+        var registry = serviceProvider.GetRequiredService<IGpioEventHandlerRegistry>();
+        var logger = serviceProvider.GetRequiredService<ILogger<GpioEventRoutingService>>();
+        
         var mappings = options.Value
             .Select(o => (o.PinId, new GpioEventRouteTarget(EventHandlerType.SelectChannel, o.Parameters)));
-
-        var registry = serviceProvider.GetRequiredService<IGpioEventHandlerRegistry>();
+        
         return new GpioEventRoutingService(
             registry, mappings.ToDictionary(
                 x => x.Item1,
-                y => y.Item2));
+                y => y.Item2),
+            logger);
     });
     
     var gpioMappings = context

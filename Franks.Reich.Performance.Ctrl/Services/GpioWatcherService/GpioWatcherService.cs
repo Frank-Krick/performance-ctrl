@@ -17,21 +17,25 @@ public class GpioWatcherService(
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        logger.LogInformation("Starting GPIO Watcher for {PinId}", pinId);
         _task = Task.Factory.StartNew(async () =>
         {
             while (_running && !cancellationToken.IsCancellationRequested)
             {
+                logger.LogInformation("Waiting for event on {PinId}", pinId);
+                
                 var result = await gpioController.WaitForEventAsync(
                     pinId, PinEventTypes.Falling & PinEventTypes.Rising,
                     cancellationToken);
+                
                 switch (result.EventTypes)
                 {
                     case PinEventTypes.Rising:
-                        logger.LogInformation("Detected rising edge");
+                        logger.LogInformation("Detected rising edge on {PinId}", pinId);
                         await routingService.Route(new GpioRisingEdgeEvent(pinId));
                         break;
                     case PinEventTypes.Falling:
-                        logger.LogInformation("Detected falling edge");
+                        logger.LogInformation("Detected falling edge on {PinId}", pinId);
                         await routingService.Route(new GpioFallingEdgeEvent(pinId));
                         break;
                 }
