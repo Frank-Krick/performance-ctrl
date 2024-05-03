@@ -1,20 +1,30 @@
 ﻿using System.Device.Gpio;
 using System.Net.Sockets;
+using Franks.Reich.Performance.Ctrl.Configuration;
 using Franks.Reich.Performance.Ctrl.Services.GpioEventHandlerRegistryService;
 using Franks.Reich.Performance.Ctrl.Services.GpioEventHandlerRegistryService.GpioEventHandlers;
 using Franks.Reich.Performance.Ctrl.Services.GpioEventRoutingService;
 using Franks.Reich.Performance.Ctrl.Services.GpioWatcherService;
 using Franks.Reich.Performance.Ctrl.Services.OpenSoundControlService;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 Console.WriteLine("Performance Ctrl");
 
 var builder = new HostBuilder();
 
-builder.ConfigureServices((_, services) =>
+builder.ConfigureAppConfiguration((context, configBuilder) =>
 {
+    configBuilder.AddJsonFile("./appsettings.json");
+});
+    
+builder.ConfigureServices((context, services) =>
+{
+    services.Configure<List<GpioMappingEntry>>(
+        context.Configuration.GetRequiredSection("GpioMappings"));
     services.AddLogging(loggingBuilder =>
     {
         loggingBuilder.AddConsole();
@@ -27,11 +37,9 @@ builder.ConfigureServices((_, services) =>
     services.AddSingleton<IGpioEventHandlerRegistry, GpioEventHandlerRegistry>();
     services.AddSingleton<IGpioEventRoutingService>(serviceProvider =>
     {
-        (int, GpioEventRouteTarget)[] mappings =
-        [
-            (1, new GpioEventRouteTarget(EventHandlerType.SelectChannel, [1, 1])),
-            (4, new GpioEventRouteTarget(EventHandlerType.SelectChannel, [1, 2])),
-        ];
+        var options = serviceProvider.GetRequiredService<IOptions<List<GpioMappingEntry>>>();
+        var mappings = options.Value
+            .Select(o => (o.PinId, new GpioEventRouteTarget(EventHandlerType.SelectChannel, o.Parameters)));
 
         var registry = serviceProvider.GetRequiredService<IGpioEventHandlerRegistry>();
         return new GpioEventRoutingService(
@@ -39,13 +47,22 @@ builder.ConfigureServices((_, services) =>
                 x => x.Item1,
                 y => y.Item2));
     });
-    services.AddHostedService(serviceProvider =>
+    
+    var gpioMappings = context
+        .Configuration
+        .GetRequiredSection("GpioMappings")
+        .Get<List<GpioMappingEntry>>();
+
+    foreach (var mapping in gpioMappings!)
     {
-        var routingService = serviceProvider.GetRequiredService<IGpioEventRoutingService>();
-        var logger = serviceProvider.GetRequiredService<ILogger<GpioWatcherService>>();
-        var gpioController = serviceProvider.GetRequiredService<GpioController>();
-        return new GpioWatcherService(1, logger, routingService, gpioController);
-    });
+        services.AddHostedService(serviceProvider =>
+        {
+            var routingService = serviceProvider.GetRequiredService<IGpioEventRoutingService>();
+            var logger = serviceProvider.GetRequiredService<ILogger<GpioWatcherService>>();
+            var gpioController = serviceProvider.GetRequiredService<GpioController>();
+            return new GpioWatcherService(mapping.PinId, logger, routingService, gpioController);
+        });
+    }
 });
 
 var app = builder.Build();
