@@ -18,6 +18,7 @@ public class GpioWatcherService(
     public Task StartAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("Starting GPIO Watcher for {PinId}", pinId);
+        gpioController.OpenPin(pinId, PinMode.InputPullUp);
         _task = Task.Factory.StartNew(async () =>
         {
             while (_running && !cancellationToken.IsCancellationRequested)

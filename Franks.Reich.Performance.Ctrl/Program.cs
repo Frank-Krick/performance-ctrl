@@ -43,7 +43,8 @@ builder.ConfigureServices((context, services) =>
         var logger = serviceProvider.GetRequiredService<ILogger<GpioEventRoutingService>>();
         
         var mappings = options.Value
-            .Select(o => (o.PinId, new GpioEventRouteTarget(EventHandlerType.SelectChannel, o.Parameters)));
+            .Select(o => (o.PinId, new GpioEventRouteTarget(
+                EventHandlerType.SelectChannel, o.Parameters)));
         
         return new GpioEventRoutingService(
             registry, mappings.ToDictionary(
