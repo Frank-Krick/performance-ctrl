@@ -60,15 +60,13 @@ builder.ConfigureServices((context, services) =>
 
     foreach (var mapping in gpioMappings!)
     {
-        services.AddSingleton(serviceProvider =>
-        {
-            var routingService = serviceProvider.GetRequiredService<IGpioEventRoutingService>();
-            var logger = serviceProvider.GetRequiredService<ILogger<GpioWatcherService>>();
-            var gpioController = serviceProvider.GetRequiredService<GpioController>();
-            var service = new GpioWatcherService(mapping.PinId, logger, routingService, gpioController);
-            _ = service.StartAsync(CancellationToken.None);
-            return service;
-        });
+        var serviceProvider = services.BuildServiceProvider();
+        var routingService = serviceProvider.GetRequiredService<IGpioEventRoutingService>();
+        var logger = serviceProvider.GetRequiredService<ILogger<GpioWatcherService>>();
+        var gpioController = serviceProvider.GetRequiredService<GpioController>();
+        var service = new GpioWatcherService(mapping.PinId, logger, routingService, gpioController);
+        _ = service.StartAsync(CancellationToken.None);
+        services.AddSingleton(service);
     }
 });
 
