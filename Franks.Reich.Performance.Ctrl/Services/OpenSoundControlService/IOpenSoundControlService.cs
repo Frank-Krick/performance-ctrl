@@ -14,9 +14,10 @@ public class OpenSoundControlService(
     UdpClient client,
     ILogger<OpenSoundControlService> logger) : IOpenSoundControlService
 {
-    public Task Send(string address, object[] parameters)
+    public async Task Send(string address, object[] parameters)
     {
         logger.LogInformation("Sending OSC message to {Address} with {Parameters}", address, parameters);
-        return client.SendMessageAsync(new OscMessage(new Address(address), parameters));
+        await client.SendMessageAsync(new OscMessage(new Address(address), parameters));
+        logger.LogInformation("Sent OSC message to {Address} with {Parameters}", address, parameters);
     }
 }
