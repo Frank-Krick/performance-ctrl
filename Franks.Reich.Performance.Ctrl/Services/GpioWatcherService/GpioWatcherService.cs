@@ -34,17 +34,24 @@ public class GpioWatcherService(
                 var result = await gpioController.WaitForEventAsync(
                     pinId, PinEventTypes.Falling,
                     cancellationToken);
-                
-                switch (result.EventTypes)
+
+                try
                 {
-                    case PinEventTypes.Rising:
-                        logger.LogInformation("Detected rising edge on {PinId}", pinId);
-                        await routingService.Route(new GpioRisingEdgeEvent(pinId));
-                        break;
-                    case PinEventTypes.Falling:
-                        logger.LogInformation("Detected falling edge on {PinId}", pinId);
-                        await routingService.Route(new GpioFallingEdgeEvent(pinId));
-                        break;
+                    switch (result.EventTypes)
+                    {
+                        case PinEventTypes.Rising:
+                            logger.LogInformation("Detected rising edge on {PinId}", pinId);
+                            await routingService.Route(new GpioRisingEdgeEvent(pinId));
+                            break;
+                        case PinEventTypes.Falling:
+                            logger.LogInformation("Detected falling edge on {PinId}", pinId);
+                            await routingService.Route(new GpioFallingEdgeEvent(pinId));
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    logger.LogInformation("Exception: {Message}", e.Message);
                 }
             }
         }, cancellationToken);
