@@ -23,6 +23,7 @@ public class GpioWatcherService(
         {
             logger.LogInformation("Event on pin {PinId}", pinId);
         });
+        /*
         _task = Task.Factory.StartNew(async () =>
         {
             while (_running && !cancellationToken.IsCancellationRequested)
@@ -46,6 +47,7 @@ public class GpioWatcherService(
                 }
             }
         }, cancellationToken);
+        */
         return Task.CompletedTask;
     }
 
