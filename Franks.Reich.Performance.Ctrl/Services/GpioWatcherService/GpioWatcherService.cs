@@ -32,7 +32,7 @@ public class GpioWatcherService(
                 logger.LogInformation("Waiting for event on {PinId}", pinId);
                 
                 var result = await gpioController.WaitForEventAsync(
-                    pinId, PinEventTypes.Falling & PinEventTypes.Rising,
+                    pinId, PinEventTypes.Falling,
                     cancellationToken);
                 
                 switch (result.EventTypes)
