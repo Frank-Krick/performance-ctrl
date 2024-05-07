@@ -19,7 +19,7 @@ public class GpioWatcherService(
     {
         logger.LogInformation("Starting GPIO Watcher for {PinId}", pinId);
         gpioController.OpenPin(pinId, PinMode.InputPullUp);
-        gpioController.RegisterCallbackForPinValueChangedEvent(pinId, PinEventTypes.Falling, (_, _) =>
+        gpioController.RegisterCallbackForPinValueChangedEvent(pinId, PinEventTypes.Falling, (_, args) =>
         {
             logger.LogInformation("Event on pin {PinId}", pinId);
         });

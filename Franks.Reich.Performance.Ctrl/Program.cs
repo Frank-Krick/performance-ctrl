@@ -31,7 +31,7 @@ builder.ConfigureServices((context, services) =>
         loggingBuilder.AddConsole();
     });
 
-    services.AddTransient<GpioController>();
+    services.AddSingleton<GpioController>();
     services.AddTransient<SelectChannelEventHandler>();
     services.AddTransient<UdpClient>(_ => new UdpClient("192.168.0.236", 1337));
     services.AddSingleton<IOpenSoundControlService, OpenSoundControlService>();
